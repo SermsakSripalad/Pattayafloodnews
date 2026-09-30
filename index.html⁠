@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ศูนย์ช่วยเหลือน้ำท่วม เมืองพัทยา</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d233a">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body { background-color: #f3f6f9; font-family: system-ui, -apple-system, sans-serif; }
+    .header-bg { background-color: #0d233a; }
+    .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    #map { width: 100%; height: calc(100vh - 120px); }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+  </style>
+</head>
+<body class="pb-10">
+
+  <!-- Header -->
+  <header class="header-bg text-white p-4 sticky top-0 z-50 shadow-md">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="backBtn" onclick="switchView('main')" class="hidden text-white pr-2 text-lg">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="bg-blue-600/30 p-2 rounded-xl border border-blue-400/30 flex items-center justify-center">
+          <i class="fa-solid fa-temperature-empty text-xl text-blue-300"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base leading-tight">ศูนย์ช่วยเหลือน้ำท่วม</h1>
+          <p class="text-xs text-blue-200">เมืองพัทยา จ.ชลบุรี</p>
+        </div>
+      </div>
+      <a href="tel:1337" class="bg-red-500/20 text-red-300 border border-red-500/40 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 hover:bg-red-500/30">
+        <i class="fa-solid fa-phone text-xs"></i> โทรสายด่วน
+      </a>
+    </div>
+  </header>
+
+  <!-- 1. Main View (หน้าหลัก) -->
+  <main id="mainView" class="view-section active max-w-md mx-auto p-4 space-y-4">
+    
+    <!-- Banner รายงานระดับน้ำ -->
+    <div onclick="switchView('report')" class="bg-gradient-to-r from-blue-700 to-blue-600 rounded-3xl p-5 text-white shadow-lg cursor-pointer hover:opacity-95 transition relative overflow-hidden">
+      <div class="flex items-start justify-between relative z-10">
+        <div class="space-y-1 max-w-[70%]">
+          <h2 class="text-xl font-bold">รายงานระดับน้ำ</h2>
+          <p class="text-xs text-blue-100 font-light leading-relaxed">บอกว่าน้ำสูงแค่ไหนตรงที่คุณอยู่ ใช้เวลาไม่ถึงนาที</p>
+        </div>
+        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+          <i class="fa-solid fa-water text-2xl text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- เมนูเข้าสู่หน้า แผนที่ & CCTV -->
+    <div class="bg-white rounded-2xl p-2 card-shadow border border-gray-100/80 divide-y divide-gray-100">
+      <div onclick="switchView('mapView')" class="flex items-center justify-between p-3.5 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600">
+            <i class="fa-solid fa-map text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-gray-800">แผนที่ระดับน้ำ</h3>
+            <p class="text-xs text-gray-400">ระดับน้ำ 24 ชม. และศูนย์พักพิงที่ยังว่าง</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+
+      <div onclick="switchView('cctvView')" class="flex items-center justify-between p-3.5 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600">
+            <i class="fa-solid fa-video text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-gray-800">กล้อง CCTV เมืองพัทยา</h3>
+            <p class="text-xs text-gray-400">ภาพสดจากกล้องจราจรและจุดเสี่ยงน้ำท่วม</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+    </div>
+
+    <!-- เบอร์ฉุกเฉิน -->
+    <div class="space-y-2 pt-1">
+      <h3 class="text-xs font-bold text-gray-500 px-1">เบอร์ฉุกเฉิน</h3>
+      <div class="bg-white rounded-2xl p-3 card-shadow border border-gray-100 space-y-3">
+        <a href="tel:1337" class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-phone text-red-500 text-base"></i>
+            <span class="text-xs font-bold text-gray-700">สายด่วนเมืองพัทยา</span>
+          </div>
+          <span class="font-extrabold text-sm text-red-600">1337</span>
+        </a>
+        <div class="border-t border-gray-100"></div>
+        <a href="tel:038222474" class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-phone text-red-500 text-base"></i>
+            <span class="text-xs font-bold text-gray-700">หน่วยกู้ภัยสว่างบริบูรณ์ พัทยา</span>
+          </div>
+          <span class="font-extrabold text-sm text-red-600">038-222-474</span>
+        </a>
+        <div class="border-t border-gray-100"></div>
+        <a href="tel:1669" class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-phone text-red-500 text-base"></i>
+            <span class="text-xs font-bold text-gray-700">การแพทย์ฉุกเฉิน</span>
+          </div>
+          <span class="font-extrabold text-sm text-red-600">1669</span>
+        </a>
+      </div>
+    </div>
+
+    <p class="text-[11px] text-gray-400 text-center pt-2">
+      ขณะนี้เปิดเฉพาะรายงานระดับน้ำ หากต้องการความช่วยเหลือ โทรเบอร์ฉุกเฉินด้านบน
+    </p>
+  </main>
+
+  <!-- 2. Map View (หน้าแผนที่แบบมี Legend) -->
+  <section id="mapView" class="view-section">
+    <div class="bg-white border-b border-gray-200 p-2 text-[10px] grid grid-cols-6 text-center font-medium gap-1 shadow-sm">
+      <div class="py-1 rounded text-white font-bold bg-emerald-500">น้ำแห้ง</div>
+      <div class="py-1 rounded text-white font-bold bg-amber-400">น้ำระดับเข่า</div>
+      <div class="py-1 rounded text-white font-bold bg-orange-500">น้ำระดับเอว</div>
+      <div class="py-1 rounded text-white font-bold bg-red-500">น้ำระดับอก</div>
+      <div class="py-1 rounded text-white font-bold bg-purple-700">น้ำเกินอก</div>
+      <div class="py-1 rounded text-white font-bold bg-indigo-900">น้ำมิดหัว</div>
+    </div>
+    <div id="map"></div>
+  </section>
+
+  <!-- 3. CCTV View (หน้ากล้อง CCTV) -->
+  <section id="cctvView" class="view-section max-w-md mx-auto p-4 space-y-4">
+    <div class="bg-slate-900 rounded-2xl h-48 flex flex-col items-center justify-center text-white p-4 shadow-lg text-center">
+      <i class="fa-solid fa-video text-3xl text-slate-500 mb-2"></i>
+      <p id="cctvTitle" class="text-xs text-slate-300">เลือกกล้องจากรายการด้านล่างเพื่อดูภาพสด</p>
+    </div>
+
+    <div class="relative">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+      <input type="text" id="cctvSearch" onkeyup="filterCCTV()" placeholder="ค้นหาชื่อถนน / จุด เช่น พัทยากลาง, สุขุมวิท" class="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <div class="bg-white rounded-2xl card-shadow border border-gray-100 overflow-hidden">
+      <div class="bg-gray-50 px-3 py-2 border-b border-gray-100 text-[11px] font-bold text-gray-500">
+        เขตเทศบาลเมืองพัทยา (Smart City) · <span id="cctvCount">4</span> กล้อง
+      </div>
+      <div id="cctvList" class="divide-y divide-gray-100 text-xs">
+        <div onclick="playCCTV('สี่แยกพัทยากลาง (ถนนสุขุมวิท)')" class="p-3 hover:bg-blue-50 cursor-pointer flex items-center gap-3">
+          <i class="fa-regular fa-circle-play text-blue-600 text-base"></i>
+          <span class="text-gray-700">สี่แยกพัทยากลาง (ถนนสุขุมวิท)</span>
+        </div>
+        <div onclick="playCCTV('ถนนเลียบหาดพัทยา ซอย 6')" class="p-3 hover:bg-blue-50 cursor-pointer flex items-center gap-3">
+          <i class="fa-regular fa-circle-play text-blue-600 text-base"></i>
+          <span class="text-gray-700">ถนนเลียบหาดพัทยา ซอย 6</span>
+        </div>
+        <div onclick="playCCTV('ปากทางพัทยาใต้ (สุขุมวิท)')" class="p-3 hover:bg-blue-50 cursor-pointer flex items-center gap-3">
+          <i class="fa-regular fa-circle-play text-blue-600 text-base"></i>
+          <span class="text-gray-700">ปากทางพัทยาใต้ (สุขุมวิท)</span>
+        </div>
+        <div onclick="playCCTV('ถนนเทพประสิทธิ์ - แยกจอมเทียน')" class="p-3 hover:bg-blue-50 cursor-pointer flex items-center gap-3">
+          <i class="fa-regular fa-circle-play text-blue-600 text-base"></i>
+          <span class="text-gray-700">ถนนเทพประสิทธิ์ - แยกจอมเทียน</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Report View (หน้าส่งรายงานระดับน้ำ) -->
+  <section id="reportView" class="view-section max-w-md mx-auto p-4">
+    <div class="bg-white rounded-2xl p-5 card-shadow border border-gray-100 space-y-4">
+      <h3 class="font-bold text-base text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-location-dot text-red-500"></i> แจ้งสถานการณ์ระดับน้ำ
+      </h3>
+      <form onsubmit="handleReportSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">ระดับความสูงน้ำท่วมขัง</label>
+          <select id="waterLevel" class="w-full border border-gray-200 rounded-xl p-2.5 text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="เข่า">🟡 ระดับเข่า (20-40 ซม.)</option>
+            <option value="เอว">🟠 ระดับเอว (50-80 ซม.)</option>
+            <option value="อก">🔴 ระดับอก (90-120 ซม.)</option>
+            <option value="มิดหัว">🟣 น้ำมิดหัว (130+ ซม.)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">ระบุพิกัด / จุดสังเกต</label>
+          <input type="text" id="reportLoc" placeholder="เช่น หน้าวัดธรรมสามัคคี พัทยาใต้" class="w-full border border-gray-200 rounded-xl p-2.5 text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 text-xs">
+          ส่งข้อมูลรายงาน
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <script>
+    let mapInitialized = false;
+    let leafletMap;
+
+    function switchView(viewName) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      const backBtn = document.getElementById('backBtn');
+      
+      if (viewName === 'main') {
+        document.getElementById('mainView').classList.add('active');
+        backBtn.classList.add('hidden');
+      } else {
+        document.getElementById(viewName).classList.add('active');
+        backBtn.classList.remove('hidden');
+      }
+
+      if (viewName === 'mapView' && !mapInitialized) {
+        initMap();
+        mapInitialized = true;
+      }
+    }
+
+    function initMap() {
+      leafletMap = L.map('map').setView([12.9276, 100.8771], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(leafletMap);
+
+      const pins = [
+        { lat: 12.9348, lng: 100.8890, title: "สี่แยกพัทยากลาง", level: "🟠 น้ำระดับเอว" },
+        { lat: 12.9270, lng: 100.8732, title: "ถนนเลียบหาดพัทยา", level: "🟡 น้ำระดับเข่า" },
+        { lat: 12.9082, lng: 100.8695, title: "ศูนย์พักพิง โรงเรียนเมืองพัทยา 8", level: "🏠 ศูนย์พักพิง (ว่าง 120 เตียง)" }
+      ];
+
+      pins.forEach(p => {
+        L.marker([p.lat, p.lng]).addTo(leafletMap).bindPopup(`<b>${p.title}</b><br>${p.level}`);
+      });
+    }
+
+    function playCCTV(name) {
+      document.getElementById('cctvTitle').innerText = "กำลังเล่นสตรีมกล้องสด: " + name;
+    }
+
+    function filterCCTV() {
+      const input = document.getElementById('cctvSearch').value.toLowerCase();
+      const items = document.querySelectorAll('#cctvList > div');
+      items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.includes(input) ? 'flex' : 'none';
+      });
+    }
+
+    function handleReportSubmit(e) {
+      e.preventDefault();
+      alert('ส่งข้อมูลรายงานระดับน้ำสำเร็จ ขอบคุณที่ร่วมแจ้งเตือนภัย');
+      switchView('main');
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
