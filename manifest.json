@@ -1,0 +1,8 @@
+{
+  "name": "ศูนย์ช่วยเหลือน้ำท่วม พัทยา",
+  "short_name": "กู้ภัยพัทยา",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d233a",
+  "theme_color": "#0d233a"
+}
